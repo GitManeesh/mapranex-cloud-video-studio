@@ -32,6 +32,8 @@ jobs:
         run: |
           mkdir -p out
           npm run render
+      - name: Install MP4 validation tool
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Video technical validation
         run: |
           test -s out/mapranex-pilot.mp4
