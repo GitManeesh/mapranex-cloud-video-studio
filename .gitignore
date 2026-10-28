@@ -1,0 +1,6 @@
+node_modules/
+public/site.png
+public/site.json
+out/
+*.mp4
+.DS_Store
