@@ -15,5 +15,14 @@
     "created_at": "2026-10-28T22:11:58.247Z",
     "run_id": "40777993547",
     "status": "rendered_pending_whatsapp_approval"
+  },
+  {
+    "path": "/de/careers/",
+    "storyKey": "a3fd531a42cabc93d145",
+    "style": "engineering-insight",
+    "title": "Gestalten Sie mit uns den nächsten Schritt. | Mapranex",
+    "created_at": "2026-10-28T23:01:54.923Z",
+    "run_id": "40784284459",
+    "status": "rendered_pending_whatsapp_approval"
   }
 ]
