@@ -1,0 +1,17 @@
+{
+  "name": "mapranex-cloud-video-studio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "capture": "node scripts/capture.mjs",
+    "render": "remotion render src/index.jsx MapranexPilot out/mapranex-pilot.mp4 --codec h264 --crf 18 --concurrency 1",
+    "compositions": "remotion compositions src/index.jsx"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.365",
+    "remotion": "4.0.365",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "playwright": "1.56.1"
+  }
+}
