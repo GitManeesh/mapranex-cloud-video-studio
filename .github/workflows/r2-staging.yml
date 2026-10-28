@@ -42,6 +42,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package.json') }}
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Install screenshot browser
@@ -56,7 +61,9 @@ jobs:
           npm run render
       - name: Verify video format
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          fi
           test -s out/mapranex-pilot.mp4
           ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of default=noprint_wrappers=1 out/mapranex-pilot.mp4
       - name: Upload to R2 directly from GitHub
@@ -67,7 +74,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
         run: |
-          python3 -m pip install --quiet --break-system-packages awscli
+          if ! command -v aws >/dev/null 2>&1; then
+            python3 -m pip install --quiet --break-system-packages awscli
+          fi
           KEY="reels/github-mapranex-${REQUEST_ID}.mp4"
           ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           aws s3 cp out/mapranex-pilot.mp4 "s3://mapranex-reels/${KEY}" --endpoint-url "$ENDPOINT" --content-type video/mp4 --no-progress
