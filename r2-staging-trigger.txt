@@ -1,1 +1,3 @@
 One-off staging upload test. GitHub Actions run ID is unique key. No schedule or social publishing.
+
+Post-credential-fix full delivery validation 2026-10-28.
