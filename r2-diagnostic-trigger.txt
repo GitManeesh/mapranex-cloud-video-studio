@@ -1,1 +1,3 @@
 Run one tiny R2 write and delete credential diagnostic, no video render.
+
+Retry after R2 credentials update: 2026-10-28.
