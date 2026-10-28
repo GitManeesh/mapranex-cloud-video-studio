@@ -6,7 +6,7 @@ if(allow.protocol!=='https:'||allow.hostname!=='myaiteam-company.vercel.app') th
 await fs.mkdir('public',{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 try {
- const page=await browser.newPage({viewport:{width:1200,height:1500},deviceScaleFactor:1});
+ const page=await browser.newPage({viewport:{width:1100,height:960},deviceScaleFactor:1});
  await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
  await page.evaluate(async()=>{await document.fonts.ready});
  await page.screenshot({path:'public/site.png',fullPage:false,animations:'disabled'});
