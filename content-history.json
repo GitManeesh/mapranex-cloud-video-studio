@@ -33,5 +33,14 @@
     "created_at": "2026-10-28T23:07:50.302Z",
     "run_id": "40785021447",
     "status": "rendered_pending_whatsapp_approval"
+  },
+  {
+    "path": "/services/",
+    "storyKey": "b3bec343e9b358c35f0d",
+    "style": "technical-explainer",
+    "title": "Services | Mapranex",
+    "created_at": "2026-10-28T23:15:17.465Z",
+    "run_id": "40785948836",
+    "status": "rendered_pending_whatsapp_approval"
   }
 ]
