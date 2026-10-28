@@ -1,0 +1,30 @@
+name: R2 credentials diagnostic
+on:
+  push:
+    branches: [main]
+    paths: [r2-diagnostic-trigger.txt]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: mapranex-r2-staging
+    steps:
+      - name: Check R2 bucket credentials using small test object
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -euo pipefail
+          pip install -q --break-system-packages awscli
+          ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          KEY="diagnostics/github-r2-${GITHUB_RUN_ID}.txt"
+          printf 'Mapranex R2 write probe %s\n' "$GITHUB_RUN_ID" >/tmp/r2-probe.txt
+          aws s3api put-object --bucket mapranex-reels --key "$KEY" --body /tmp/r2-probe.txt --endpoint-url "$ENDPOINT" --content-type text/plain >/dev/null
+          echo 'PutObject succeeded'
+          aws s3api head-object --bucket mapranex-reels --key "$KEY" --endpoint-url "$ENDPOINT" --query ContentLength --output text
+          aws s3api delete-object --bucket mapranex-reels --key "$KEY" --endpoint-url "$ENDPOINT" >/dev/null
+          echo 'R2 diagnostic passed; temporary probe deleted'
