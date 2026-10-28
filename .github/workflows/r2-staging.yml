@@ -1,0 +1,87 @@
+name: Mapranex R2 delivery - staging
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: 'Numeric n8n execution id or staging request id'
+        required: true
+        type: string
+      source_url:
+        description: 'auto or a public Mapranex webpage'
+        required: false
+        default: 'auto'
+        type: string
+
+permissions:
+  contents: write
+concurrency:
+  group: mapranex-r2-staging
+  cancel-in-progress: false
+
+jobs:
+  reel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: mapranex-r2-staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate input and credentials
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}
+          SOURCE_URL: ${{ inputs.source_url }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          [[ "$REQUEST_ID" =~ ^[0-9]{1,18}$ ]] || { echo "::error::Invalid numeric request ID"; exit 1; }
+          [[ "$SOURCE_URL" == "auto" || "$SOURCE_URL" == https://myaiteam-company.vercel.app/* ]] || { echo "::error::Invalid source URL"; exit 1; }
+          [[ -n "$R2_ACCOUNT_ID" && -n "$R2_ACCESS_KEY_ID" && -n "$R2_SECRET_ACCESS_KEY" ]] || { echo "::error::R2 staging environment secrets are not configured"; exit 1; }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install screenshot browser
+        run: npx playwright install --with-deps chromium
+      - name: Capture source and select fresh topic
+        env:
+          MAPRANEX_SOURCE_URL: ${{ inputs.source_url }}
+        run: npm run capture
+      - name: Render video on GitHub
+        run: |
+          mkdir -p out
+          npm run render
+      - name: Verify video format
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          test -s out/mapranex-pilot.mp4
+          ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of default=noprint_wrappers=1 out/mapranex-pilot.mp4
+      - name: Upload to R2 directly from GitHub
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          python3 -m pip install --quiet --break-system-packages awscli
+          KEY="reels/github-mapranex-${REQUEST_ID}.mp4"
+          ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          aws s3 cp out/mapranex-pilot.mp4 "s3://mapranex-reels/${KEY}" --endpoint-url "$ENDPOINT" --content-type video/mp4 --no-progress
+          aws s3api head-object --bucket mapranex-reels --key "$KEY" --endpoint-url "$ENDPOINT" --query 'ContentLength' --output text
+          echo "R2 object key: ${KEY}"
+      - name: Save successful topic history
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const story=JSON.parse(fs.readFileSync('public/story.json','utf8'));
+          const history=JSON.parse(fs.readFileSync('content-history.json','utf8'));
+          if(history.some(x=>x.storyKey===story.storyKey)) throw Error('Duplicate storyboard');
+          history.push({path:story.path,storyKey:story.storyKey,style:story.style,title:story.title,created_at:story.created_at,run_id:process.env.GITHUB_RUN_ID,status:'rendered_pending_whatsapp_approval'});
+          fs.writeFileSync('content-history.json',JSON.stringify(history,null,2)+'\n');
+          NODE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content-history.json
+          git commit -m "Record staged Mapranex video [skip ci]"
+          git push
