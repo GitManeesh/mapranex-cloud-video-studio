@@ -1,5 +1,8 @@
 name: Mapranex quality-first Reel pilot
 on:
+  push:
+    paths:
+      - 'pilot-trigger.txt'
   workflow_dispatch:
     inputs:
       source_url:
