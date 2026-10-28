@@ -31,8 +31,14 @@ try {
   }
   urls=[...new Set(discovered.filter(x=>x.startsWith(origin+'/')&&!/\.xml(\?|$)/i.test(x)))];
  }
+ const history=await loadHistory();
+ const used=new Map();
+ for(const h of history)used.set(h.path,(used.get(h.path)||0)+1);
+ // Prioritize previously unused pages. Only inspect enough valid pages to choose a fresh topic.
+ urls.sort((a,b)=>(used.get(new URL(a).pathname)||0)-(used.get(new URL(b).pathname)||0));
  const candidates=[];
  for(const url of urls.slice(0,80)){
+  if(candidates.length>=8)break;
   const u=new URL(url);
   if(u.hostname!==new URL(origin).hostname||excluded.test(u.pathname))continue;
   try{
@@ -50,9 +56,6 @@ try {
   }catch(e){console.log('Skipping',url,e.message)}
  }
  if(!candidates.length)throw Error('No content-rich relevant pages found. Render refused.');
- const history=await loadHistory();
- const used=new Map();
- for(const h of history){used.set(h.path,(used.get(h.path)||0)+1)}
  candidates.sort((a,b)=>(used.get(a.path)||0)-(used.get(b.path)||0)||b.wordCount-a.wordCount);
  const pick=candidates[0], count=history.length;
  const styles=['product-showcase','technical-explainer','engineering-insight'];
