@@ -8,9 +8,9 @@ on:
       source_url:
         description: 'Mapranex website page (production hostname only)'
         required: false
-        default: 'https://myaiteam-company.vercel.app/services/cloud-devops/'
+        default: 'auto'
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: mapranex-video-render
   cancel-in-progress: false
@@ -41,6 +41,21 @@ jobs:
         run: |
           test -s out/mapranex-pilot.mp4
           ffprobe -v error -show_entries stream=width,height,codec_name -of default=noprint_wrappers=1 out/mapranex-pilot.mp4
+      - name: Record successful video in history
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const story=JSON.parse(fs.readFileSync('public/story.json','utf8'));
+          const history=JSON.parse(fs.readFileSync('content-history.json','utf8'));
+          if(history.some(x=>x.storyKey===story.storyKey)) throw Error('Duplicate video story detected');
+          history.push({path:story.path,storyKey:story.storyKey,style:story.style,title:story.title,created_at:story.created_at,run_id:process.env.GITHUB_RUN_ID});
+          fs.writeFileSync('content-history.json',JSON.stringify(history,null,2)+'\\n');
+          NODE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content-history.json
+          git commit -m "Record generated Mapranex Reel topic [skip ci]"
+          git push
       - name: Preview artifact - expires after 1 day
         uses: actions/upload-artifact@v4
         with:
