@@ -1,3 +1,5 @@
 Mapranex controlled quality pilot trigger — 2026-10-28. One run; no schedule.
 
 Screenshot layout fix test: contain image and matched capture aspect ratio.
+
+Controlled automatic sitemap and uniqueness test: 2026-10-28.
