@@ -49,7 +49,7 @@ jobs:
           const history=JSON.parse(fs.readFileSync('content-history.json','utf8'));
           if(history.some(x=>x.storyKey===story.storyKey)) throw Error('Duplicate video story detected');
           history.push({path:story.path,storyKey:story.storyKey,style:story.style,title:story.title,created_at:story.created_at,run_id:process.env.GITHUB_RUN_ID});
-          fs.writeFileSync('content-history.json',JSON.stringify(history,null,2)+'\\n');
+          fs.writeFileSync('content-history.json',JSON.stringify(history,null,2)+'\n');
           NODE
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
