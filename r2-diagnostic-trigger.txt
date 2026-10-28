@@ -1,0 +1,1 @@
+Run one tiny R2 write and delete credential diagnostic, no video render.
