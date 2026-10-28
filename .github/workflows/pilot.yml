@@ -1,0 +1,44 @@
+name: Mapranex quality-first Reel pilot
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: 'Mapranex website page (production hostname only)'
+        required: false
+        default: 'https://myaiteam-company.vercel.app/services/cloud-devops/'
+permissions:
+  contents: read
+concurrency:
+  group: mapranex-video-render
+  cancel-in-progress: false
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install screenshot browser
+        run: npx playwright install --with-deps chromium
+      - name: Capture real Mapranex webpage
+        env:
+          MAPRANEX_SOURCE_URL: ${{ inputs.source_url }}
+        run: npm run capture
+      - name: Render preview Reel on GitHub runner
+        run: |
+          mkdir -p out
+          npm run render
+      - name: Video technical validation
+        run: |
+          test -s out/mapranex-pilot.mp4
+          ffprobe -v error -show_entries stream=width,height,codec_name -of default=noprint_wrappers=1 out/mapranex-pilot.mp4
+      - name: Preview artifact - expires after 1 day
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapranex-pilot-preview
+          path: out/mapranex-pilot.mp4
+          retention-days: 1
